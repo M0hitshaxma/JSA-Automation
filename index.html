@@ -1,52 +1,309 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Heat Map Automation Tool — Filtered</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./output.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    @keyframes move-stars { from { transform: translateY(0) } to { transform: translateY(-2000px) } }
-    @keyframes dust { 0% { transform: translate(0,0) } 50% { transform: translate(20px,30px) } 100% { transform: translate(0,0) } }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
-    @keyframes pulse { 0%, 100% { text-shadow: 0 0 10px rgba(165,180,252,.5) } 50% { text-shadow: 0 0 20px rgba(165,180,252,.8) } }
-    @keyframes pop-in-effect { 0% { opacity: 0; transform: translateY(50px) scale(.8) } 100% { opacity: 1; transform: translateY(0) scale(1) } }
-    @keyframes bounce-fab { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
-    html { scroll-behavior: smooth }
-    body { font-family: 'Inter', sans-serif; color: #e2e8f0; background-color: #020617 }
-    #background-container { position: fixed; inset: 0; z-index: -1; background-color: #020617; overflow: hidden }
-    .stars { position: absolute; inset: 0; background: transparent }
-    .stars1 { background-image: radial-gradient(1px 1px at 20px 30px, #fff, #0000), radial-gradient(1px 1px at 40px 70px, #fff, #0000), radial-gradient(1px 1px at 50px 160px, #fff, #0000), radial-gradient(1px 1px at 90px 40px, #fff, #0000), radial-gradient(2px 2px at 130px 80px, #fff, #0000), radial-gradient(1px 1px at 160px 120px, #fff, #0000); background-size: 200px 200px; animation: move-stars 120s linear infinite }
-    #cosmic-dust { position: absolute; inset: 0; background-image: radial-gradient(circle at 20% 20%, rgba(124,58,237,.1) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(21,128,61,.1) 0%, transparent 40%); animation: dust 30s ease-in-out infinite }
-    #top-banner { position: absolute; top: 0; left: 0; width: 100%; text-align: center; padding: 1rem; color: #c7d2fe; font-weight: 600; letter-spacing: .1em; animation: pulse 4s ease-in-out infinite }
-    .main-container { background-color: rgba(15,23,42,.6); backdrop-filter: blur(16px) saturate(150%); -webkit-backdrop-filter: blur(16px) saturate(150%); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.1); animation: fadeInUp .8s ease-out forwards }
-    #feedback-fab { position: fixed; bottom: 2rem; right: 2rem; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(45deg,#4f46e5,#7c3aed); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 5px 20px rgba(99,102,241,.5); z-index: 1000; animation: bounce-fab 3s ease-in-out infinite 2s }
-    #feedback-fab:hover { animation-play-state: paused; transform: scale(1.1) }
-    #feedback-widget { position: fixed; bottom: 6.5rem; right: 2rem; width: 320px; background-color: rgba(30,41,59,.9); backdrop-filter: blur(10px); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.1); z-index: 999; opacity: 0; visibility: hidden; transform-origin: bottom right; padding: 1rem }
-    #feedback-widget.visible { opacity: 1; visibility: visible; animation: pop-in-effect .5s forwards cubic-bezier(.34,1.56,.64,1) }
-    #feedback-widget textarea { width: 100%; padding: .75rem; margin-bottom: 1rem; height: 150px; border: 1px solid #475569; background-color: #1e293b; color: #cbd5e1; border-radius: 6px; resize: none }
-    #feedback-widget button { width: 100%; padding: .6rem; background-color: #4f46e5; color: #fff; border-radius: 6px; font-weight: 600 }
-    .animated-child { opacity: 0; animation: fadeInUp .8s ease-out forwards }
-    .interactive-section { transition: transform .3s ease, background-color .3s ease; background-color: rgba(30,41,59,.5); border: 1px solid rgba(255,255,255,.1) }
-    .interactive-section:hover { transform: translateY(-5px); background-color: rgba(51,65,85,.7) }
-    .file-input-label { cursor: pointer; border: 2px dashed #475569; background-color: rgba(51,65,85,.5); transition: all .3s ease }
-    .file-input-label:hover { border-color: #6366f1; background-color: rgba(67,56,202,.2) }
-    .styled-button { background: linear-gradient(45deg,#4338ca,#6d28d9); color: #fff; font-weight: 600; box-shadow: 0 4px 14px 0 rgba(0,0,0,.2); transition: all .3s ease }
-    .styled-button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px 0 rgba(124,58,237,.3) }
-    .styled-button-light { background-color: #e2e8f0; color: #1e293b; font-weight: 600; box-shadow: 0 4px 14px 0 rgba(0,0,0,.1); transition: all .3s ease }
-    .styled-button-light:hover { transform: translateY(-2px); background-color: #f8fafc; box-shadow: 0 6px 20px 0 rgba(200,200,200,.2) }
-    .loader { border-top-color: #4f46e5; animation: spinner 1.5s linear infinite }
-    @keyframes spinner { 0% { transform: rotate(0) } 100% { transform: rotate(360deg) } }
-    .results-table th { background-color: #1e293b; border-bottom: 2px solid #334155 }
-    .results-table td { border-bottom: 1px solid #334155; background-color: #0f172a }
-    .results-table td.sticky { background-color: #1e293b }
-    input[type="radio"]:checked + label { color: #a5b4fc; font-weight: 600 }
-    details > summary::-webkit-details-marker { display:none }
+    @keyframes move-stars {
+      from {
+        transform: translateY(0)
+      }
+
+      to {
+        transform: translateY(-2000px)
+      }
+    }
+
+    @keyframes dust {
+      0% {
+        transform: translate(0, 0)
+      }
+
+      50% {
+        transform: translate(20px, 30px)
+      }
+
+      100% {
+        transform: translate(0, 0)
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        text-shadow: 0 0 10px rgba(165, 180, 252, .5)
+      }
+
+      50% {
+        text-shadow: 0 0 20px rgba(165, 180, 252, .8)
+      }
+    }
+
+    @keyframes pop-in-effect {
+      0% {
+        opacity: 0;
+        transform: translateY(50px) scale(.8)
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1)
+      }
+    }
+
+    @keyframes bounce-fab {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-8px)
+      }
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: #e2e8f0;
+      background-color: #020617
+    }
+
+    #background-container {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background-color: #020617;
+      overflow: hidden
+    }
+
+    .stars {
+      position: absolute;
+      inset: 0;
+      background: transparent
+    }
+
+    .stars1 {
+      background-image: radial-gradient(1px 1px at 20px 30px, #fff, #0000), radial-gradient(1px 1px at 40px 70px, #fff, #0000), radial-gradient(1px 1px at 50px 160px, #fff, #0000), radial-gradient(1px 1px at 90px 40px, #fff, #0000), radial-gradient(2px 2px at 130px 80px, #fff, #0000), radial-gradient(1px 1px at 160px 120px, #fff, #0000);
+      background-size: 200px 200px;
+      animation: move-stars 120s linear infinite
+    }
+
+    #cosmic-dust {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle at 20% 20%, rgba(124, 58, 237, .1) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(21, 128, 61, .1) 0%, transparent 40%);
+      animation: dust 30s ease-in-out infinite
+    }
+
+    #top-banner {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      padding: 1rem;
+      color: #c7d2fe;
+      font-weight: 600;
+      letter-spacing: .1em;
+      animation: pulse 4s ease-in-out infinite
+    }
+
+    .main-container {
+      background-color: rgba(15, 23, 42, .6);
+      backdrop-filter: blur(16px) saturate(150%);
+      -webkit-backdrop-filter: blur(16px) saturate(150%);
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .3);
+      border: 1px solid rgba(255, 255, 255, .1);
+      animation: fadeInUp .8s ease-out forwards
+    }
+
+    #feedback-fab {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #4f46e5, #7c3aed);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 5px 20px rgba(99, 102, 241, .5);
+      z-index: 1000;
+      animation: bounce-fab 3s ease-in-out infinite 2s
+    }
+
+    #feedback-fab:hover {
+      animation-play-state: paused;
+      transform: scale(1.1)
+    }
+
+    #feedback-widget {
+      position: fixed;
+      bottom: 6.5rem;
+      right: 2rem;
+      width: 320px;
+      background-color: rgba(30, 41, 59, .9);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .3);
+      border: 1px solid rgba(255, 255, 255, .1);
+      z-index: 999;
+      opacity: 0;
+      visibility: hidden;
+      transform-origin: bottom right;
+      padding: 1rem
+    }
+
+    #feedback-widget.visible {
+      opacity: 1;
+      visibility: visible;
+      animation: pop-in-effect .5s forwards cubic-bezier(.34, 1.56, .64, 1)
+    }
+
+    #feedback-widget textarea {
+      width: 100%;
+      padding: .75rem;
+      margin-bottom: 1rem;
+      height: 150px;
+      border: 1px solid #475569;
+      background-color: #1e293b;
+      color: #cbd5e1;
+      border-radius: 6px;
+      resize: none
+    }
+
+    #feedback-widget button {
+      width: 100%;
+      padding: .6rem;
+      background-color: #4f46e5;
+      color: #fff;
+      border-radius: 6px;
+      font-weight: 600
+    }
+
+    .animated-child {
+      opacity: 0;
+      animation: fadeInUp .8s ease-out forwards
+    }
+
+    .interactive-section {
+      transition: transform .3s ease, background-color .3s ease;
+      background-color: rgba(30, 41, 59, .5);
+      border: 1px solid rgba(255, 255, 255, .1)
+    }
+
+    .interactive-section:hover {
+      transform: translateY(-5px);
+      background-color: rgba(51, 65, 85, .7)
+    }
+
+    .file-input-label {
+      cursor: pointer;
+      border: 2px dashed #475569;
+      background-color: rgba(51, 65, 85, .5);
+      transition: all .3s ease
+    }
+
+    .file-input-label:hover {
+      border-color: #6366f1;
+      background-color: rgba(67, 56, 202, .2)
+    }
+
+    .styled-button {
+      background: linear-gradient(45deg, #4338ca, #6d28d9);
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 4px 14px 0 rgba(0, 0, 0, .2);
+      transition: all .3s ease
+    }
+
+    .styled-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px 0 rgba(124, 58, 237, .3)
+    }
+
+    .styled-button-light {
+      background-color: #e2e8f0;
+      color: #1e293b;
+      font-weight: 600;
+      box-shadow: 0 4px 14px 0 rgba(0, 0, 0, .1);
+      transition: all .3s ease
+    }
+
+    .styled-button-light:hover {
+      transform: translateY(-2px);
+      background-color: #f8fafc;
+      box-shadow: 0 6px 20px 0 rgba(200, 200, 200, .2)
+    }
+
+    .loader {
+      border-top-color: #4f46e5;
+      animation: spinner 1.5s linear infinite
+    }
+
+    @keyframes spinner {
+      0% {
+        transform: rotate(0)
+      }
+
+      100% {
+        transform: rotate(360deg)
+      }
+    }
+
+    .results-table th {
+      background-color: #1e293b;
+      border-bottom: 2px solid #334155
+    }
+
+    .results-table td {
+      border-bottom: 1px solid #334155;
+      background-color: #0f172a
+    }
+
+    .results-table td.sticky {
+      background-color: #1e293b
+    }
+
+    input[type="radio"]:checked+label {
+      color: #a5b4fc;
+      font-weight: 600
+    }
+
+    details>summary::-webkit-details-marker {
+      display: none
+    }
   </style>
 </head>
+
 <body class="p-4">
   <div id="background-container">
     <div id="cosmic-dust"></div>
@@ -59,7 +316,8 @@
     <div class="main-container w-full max-w-5xl p-6 md:p-10 space-y-8">
       <header class="text-center pb-4 animated-child" style="animation-delay:.1s">
         <h1 class="text-4xl font-bold text-gray-100 tracking-tight">Heat Map Automation Tool</h1>
-        <p class="text-gray-400 mt-2 text-lg">Generate a color-coded usage analysis from your daily reports (filtered to a specific list).</p>
+        <p class="text-gray-400 mt-2 text-lg">Generate a color-coded usage analysis from your daily reports (filtered to
+          a specific list).</p>
       </header>
 
       <div class="space-y-8">
@@ -68,11 +326,14 @@
             <label class="font-semibold text-gray-200 text-center block text-lg">1. Select Analysis Interval</label>
             <div class="flex justify-center gap-x-8 mt-3">
               <div class="flex items-center">
-                <input id="interval-7" type="radio" name="interval" value="7" class="h-4 w-4 text-indigo-500 bg-slate-600 border-slate-500 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800" checked />
+                <input id="interval-7" type="radio" name="interval" value="7"
+                  class="h-4 w-4 text-indigo-500 bg-slate-600 border-slate-500 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800"
+                  checked />
                 <label for="interval-7" class="ml-3 text-md text-gray-300">7 Days (Weekly)</label>
               </div>
               <div class="flex items-center">
-                <input id="interval-14" type="radio" name="interval" value="14" class="h-4 w-4 text-indigo-500 bg-slate-600 border-slate-500 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800" />
+                <input id="interval-14" type="radio" name="interval" value="14"
+                  class="h-4 w-4 text-indigo-500 bg-slate-600 border-slate-500 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800" />
                 <label for="interval-14" class="ml-3 text-md text-gray-300">14 Days (Bi-Weekly)</label>
               </div>
             </div>
@@ -93,7 +354,9 @@
               <span class="text-sm text-gray-400">Edit if needed</span>
             </summary>
             <div class="mt-4 grid gap-3">
-              <textarea id="allowed-textarea" class="w-full p-3 rounded-md bg-slate-800 border border-slate-600 text-sm text-slate-200" rows="6" spellcheck="false">kartikeya.gs@jsalaw.com
+              <textarea id="allowed-textarea"
+                class="w-full p-3 rounded-md bg-slate-800 border border-slate-600 text-sm text-slate-200" rows="6"
+                spellcheck="false">kartikeya.gs@jsalaw.com
 ishita.parashar@jsalaw.com
 gavin.pereira@jsalaw.com
 dushyant.thakur@jsalaw.com
@@ -108,7 +371,8 @@ vandana.v@jsalaw.com
 shubh.dixit@jsalaw.com
 ruchita.modi@jsalaw.com</textarea>
               <button id="apply-allowed" class="styled-button py-2 px-4 rounded-lg w-max">Apply Filter List</button>
-              <p class="text-xs text-slate-400">One email per line. Case-insensitive. Only rows with a matching <code>UserID</code> will be included in the reports.</p>
+              <p class="text-xs text-slate-400">One email per line. Case-insensitive. Only rows with a matching
+                <code>UserID</code> will be included in the reports.</p>
             </div>
           </details>
         </div>
@@ -120,7 +384,8 @@ ruchita.modi@jsalaw.com</textarea>
           <p id="status-message" class="text-lg font-medium text-gray-300">Processing your report...</p>
         </div>
 
-        <div id="error-box" class="hidden bg-red-900/50 border-l-4 border-red-500 text-red-300 p-4 rounded-md" role="alert">
+        <div id="error-box" class="hidden bg-red-900/50 border-l-4 border-red-500 text-red-300 p-4 rounded-md"
+          role="alert">
           <p class="font-bold">Error!</p>
           <p id="error-message">Something went wrong.</p>
         </div>
@@ -130,9 +395,12 @@ ruchita.modi@jsalaw.com</textarea>
         <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <h2 class="text-3xl font-bold text-gray-100">Automation completed</h2>
           <div class="flex flex-wrap justify-center gap-3">
-            <button id="download-summary-btn" class="styled-button-light py-2 px-5 rounded-lg">Download Absolute Report</button>
-            <button id="download-analysis-btn" class="styled-button py-2 px-5 rounded-lg">Download Analysis Report</button>
-            <button id="download-full-report-btn" class="styled-button py-2 px-5 rounded-lg">Download Final Report</button>
+            <button id="download-summary-btn" class="styled-button-light py-2 px-5 rounded-lg">Download Absolute
+              Report</button>
+            <button id="download-analysis-btn" class="styled-button py-2 px-5 rounded-lg">Download Analysis
+              Report</button>
+            <button id="download-full-report-btn" class="styled-button py-2 px-5 rounded-lg">Download Final
+              Report</button>
           </div>
         </div>
         <div class="mb-4 text-sm text-slate-300" id="filter-summary"></div>
@@ -147,12 +415,15 @@ ruchita.modi@jsalaw.com</textarea>
   </main>
 
   <div id="feedback-fab" title="Send feedback">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="2"
+      stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
     </svg>
   </div>
   <div id="feedback-widget">
-    <textarea id="feedback-message" placeholder="Found an issue or have a feature request? Let Mohit know about it..."></textarea>
+    <textarea id="feedback-message"
+      placeholder="Found an issue or have a feature request? Let Mohit know about it..."></textarea>
     <button id="send-feedback-btn">Send to Mohit directly</button>
   </div>
 
@@ -281,8 +552,8 @@ ruchita.modi@jsalaw.com</textarea>
     let finalAnalysisData = null;
 
     async function createPeriodSummary(workbook, interval, allowedEmailsSet) {
-      const documentSheets = ['Assistant','Briefcase','OCR','Sorting Hat','Redline Issues','Consent Tracker','Redaction','Chat','Translator','Workflow Builder','Chronologies','Dataroom Insights','Snapshot'];
-      const querySheets = ['Assistant Queries','Briefcase Queries','Chat Queries'];
+      const documentSheets = ['Assistant', 'Briefcase', 'OCR', 'Sorting Hat', 'Redline Issues', 'Consent Tracker', 'Redaction', 'Chat', 'Translator', 'Workflow Builder', 'Chronologies', 'Dataroom Insights', 'Snapshot'];
+      const querySheets = ['Assistant Queries', 'Briefcase Queries', 'Chat Queries'];
 
       const parseDate = (dateStr) => {
         if (typeof dateStr !== 'string') return null;
@@ -348,7 +619,7 @@ ruchita.modi@jsalaw.com</textarea>
       const docAgg = getAggregatedData(documentSheets, filteredIds);
       const queryAgg = getAggregatedData(querySheets, filteredIds);
 
-      const allDates = [...new Set([...docAgg.dates, ...queryAgg.dates])].sort((a,b) => new Date(a) - new Date(b));
+      const allDates = [...new Set([...docAgg.dates, ...queryAgg.dates])].sort((a, b) => new Date(a) - new Date(b));
       if (allDates.length === 0) throw new Error('No valid date columns found in DD-MM-YYYY format.');
 
       // 4) Build periods by interval
@@ -436,11 +707,11 @@ ruchita.modi@jsalaw.com</textarea>
           td.className = 'px-6 py-4 whitespace-nowrap font-semibold text-center text-sm';
 
           if (status === 'Not Used') {
-            td.classList.add('bg-yellow-800/30','text-yellow-100');
+            td.classList.add('bg-yellow-800/30', 'text-yellow-100');
           } else if (status === 'Used, but potential for more.') {
-            td.classList.add('bg-sky-900/40','text-sky-100');
+            td.classList.add('bg-sky-900/40', 'text-sky-100');
           } else if (status === 'Good usage.') {
-            td.classList.add('bg-green-800/30','text-green-100');
+            td.classList.add('bg-green-800/30', 'text-green-100');
           }
           row.appendChild(td);
         });
@@ -488,16 +759,16 @@ ruchita.modi@jsalaw.com</textarea>
 
     function createAbsoluteReportSheet(workbook, summaryData) {
       const worksheet = workbook.addWorksheet('Usage (absolute)');
-      const border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
-      const headerStyle = { font:{bold:true,size:11,color:{argb:'FF000000'}}, alignment:{ horizontal:'center', vertical:'middle', wrapText:true }, fill:{ type:'pattern', pattern:'solid', fgColor:{ argb:'FFD9D9D9' } }, border };
-      const subHeaderStyle = { font:{bold:true,size:11,color:{argb:'FF000000'}}, alignment:{ horizontal:'center', vertical:'middle', wrapText:true }, fill:{ type:'pattern', pattern:'solid', fgColor:{ argb:'FFEFEFEF' } }, border };
-      const cellStyle = { font:{bold:false,size:11,color:{argb:'FF000000'}}, alignment:{ horizontal:'center', vertical:'middle', wrapText:true }, border };
+      const border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      const headerStyle = { font: { bold: true, size: 11, color: { argb: 'FF000000' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } }, border };
+      const subHeaderStyle = { font: { bold: true, size: 11, color: { argb: 'FF000000' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFEFEF' } }, border };
+      const cellStyle = { font: { bold: false, size: 11, color: { argb: 'FF000000' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border };
 
       const topRowValues = ['User ID'];
       const secondRowValues = [''];
-      summaryData.periods.forEach(() => { topRowValues.push('', ''); secondRowValues.push('Documents','Queries') });
-      topRowValues.push('','');
-      secondRowValues.push('Total Documents Uploaded','Total Queries Asked');
+      summaryData.periods.forEach(() => { topRowValues.push('', ''); secondRowValues.push('Documents', 'Queries') });
+      topRowValues.push('', '');
+      secondRowValues.push('Total Documents Uploaded', 'Total Queries Asked');
 
       const periodHeaderRow = worksheet.addRow(topRowValues);
       const categoryHeaderRow = worksheet.addRow(secondRowValues);
@@ -519,8 +790,8 @@ ruchita.modi@jsalaw.com</textarea>
           const queries = summaryData.data[user][p].Queries || 0;
           rowValues.push(docs, queries);
         });
-        const totalDocs = summaryData.periods.reduce((sum,p) => sum + (summaryData.data[user][p].Documents || 0), 0);
-        const totalQueries = summaryData.periods.reduce((sum,p) => sum + (summaryData.data[user][p].Queries || 0), 0);
+        const totalDocs = summaryData.periods.reduce((sum, p) => sum + (summaryData.data[user][p].Documents || 0), 0);
+        const totalQueries = summaryData.periods.reduce((sum, p) => sum + (summaryData.data[user][p].Queries || 0), 0);
         rowValues.push(totalDocs, totalQueries);
         const row = worksheet.addRow(rowValues);
         row.eachCell({ includeEmpty: true }, cell => { cell.style = cellStyle });
@@ -543,13 +814,13 @@ ruchita.modi@jsalaw.com</textarea>
       if (!finalAnalysisData) return;
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Usage (heatmap)');
-      const border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
+      const border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
       const styles = {
-        header: { font:{bold:true,size:11,color:{argb:'FF000000'}}, alignment:{ horizontal:'center', vertical:'middle', wrapText:true }, fill:{ type:'pattern', pattern:'solid', fgColor:{argb:'FFD9D9D9'} }, border },
-        notUsed: { fill:{type:'pattern',pattern:'solid',fgColor:{argb:'FFF9E4A8'}}, font:{bold:false,size:11,color:{argb:'FF000000'}}, alignment:{ horizontal:'center', vertical:'middle', wrapText:true }, border },
-        potential: { fill:{type:'pattern',pattern:'solid',fgColor:{argb:'FFBBDEFB'}}, font:{bold:false,size:11,color:{argb:'FF000000'}}, alignment:{ horizontal:'center', vertical:'middle', wrapText:true }, border },
-        good: { fill:{type:'pattern',pattern:'solid',fgColor:{argb:'FFC8E6C9'}}, font:{bold:false,size:11,color:{argb:'FF000000'}}, alignment:{ horizontal:'center', vertical:'middle', wrapText:true }, border },
-        idCell: { font:{bold:false,size:11,color:{argb:'FF000000'}}, alignment:{ horizontal:'center', vertical:'middle', wrapText:true }, border }
+        header: { font: { bold: true, size: 11, color: { argb: 'FF000000' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } }, border },
+        notUsed: { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9E4A8' } }, font: { bold: false, size: 11, color: { argb: 'FF000000' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border },
+        potential: { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBBDEFB' } }, font: { bold: false, size: 11, color: { argb: 'FF000000' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border },
+        good: { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC8E6C9' } }, font: { bold: false, size: 11, color: { argb: 'FF000000' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border },
+        idCell: { font: { bold: false, size: 11, color: { argb: 'FF000000' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border }
       };
 
       const headerRow = worksheet.addRow(['User ID', ...finalAnalysisData.periods]);
@@ -586,15 +857,15 @@ ruchita.modi@jsalaw.com</textarea>
       const { dataWithOverall, summaryCounts, organizationBehavior } = calculateOverallSummary(finalAnalysisData);
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Usage (heatmap)');
-      const border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
+      const border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
       const styles = {
-        header: { font:{bold:true,size:11,color:{argb:'FF000000'}}, alignment:{ horizontal:'center', vertical:'middle', wrapText:true }, fill:{ type:'pattern', pattern:'solid', fgColor:{argb:'FFD9D9D9'} }, border },
-        notUsed: { fill:{type:'pattern',pattern:'solid',fgColor:{argb:'FFF9E4A8'}}, font:{bold:false,size:11,color:{argb:'FF000000'}}, alignment:{ horizontal:'center', vertical:'middle', wrapText:true }, border },
-        potential: { fill:{type:'pattern',pattern:'solid',fgColor:{argb:'FFBBDEFB'}}, font:{bold:false,size:11,color:{argb:'FF000000'}}, alignment:{ horizontal:'center', vertical:'middle', wrapText:true }, border },
-        good: { fill:{type:'pattern',pattern:'solid',fgColor:{argb:'FFC8E6C9'}}, font:{bold:false,size:11,color:{argb:'FF000000'}}, alignment:{ horizontal:'center', vertical:'middle', wrapText:true }, border },
-        idCell: { font:{bold:false,size:11,color:{argb:'FF000000'}}, alignment:{ horizontal:'center', vertical:'middle', wrapText:true }, border },
-        summaryHeader: { font:{bold:true,size:11,color:{argb:'FF000000'}}, alignment:{ horizontal:'center', vertical:'middle', wrapText:true }, fill:{ type:'pattern', pattern:'solid', fgColor:{argb:'FFD9D9D9'} }, border },
-        summaryCell: { font:{bold:false,size:11,color:{argb:'FF000000'}}, alignment:{ horizontal:'center', vertical:'middle', wrapText:true }, border }
+        header: { font: { bold: true, size: 11, color: { argb: 'FF000000' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } }, border },
+        notUsed: { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9E4A8' } }, font: { bold: false, size: 11, color: { argb: 'FF000000' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border },
+        potential: { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBBDEFB' } }, font: { bold: false, size: 11, color: { argb: 'FF000000' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border },
+        good: { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC8E6C9' } }, font: { bold: false, size: 11, color: { argb: 'FF000000' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border },
+        idCell: { font: { bold: false, size: 11, color: { argb: 'FF000000' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border },
+        summaryHeader: { font: { bold: true, size: 11, color: { argb: 'FF000000' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } }, border },
+        summaryCell: { font: { bold: false, size: 11, color: { argb: 'FF000000' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, border }
       };
 
       const headerRow = worksheet.addRow(['User ID', ...dataWithOverall.periods, 'Overall']);
@@ -625,9 +896,9 @@ ruchita.modi@jsalaw.com</textarea>
       worksheet.addRow([]);
       const summaryTitleRow = worksheet.addRow(['Overall Summary']);
       summaryTitleRow.getCell(1).style = styles.summaryHeader;
-      const summaryHeaderRow = worksheet.addRow(['Category','Total Users']);
+      const summaryHeaderRow = worksheet.addRow(['Category', 'Total Users']);
       summaryHeaderRow.eachCell(cell => { cell.style = styles.summaryHeader });
-      [ ['Not Used', summaryCounts['Not Used']], ['Good / Regular Usage', summaryCounts['Good / Regular Usage']], ['Intermittent Usage', summaryCounts['Intermittent Usage']], ['Sum Total', dataWithOverall.users.length] ].forEach(vals => { const r = worksheet.addRow(vals); r.eachCell(c => { c.style = styles.summaryCell }) });
+      [['Not Used', summaryCounts['Not Used']], ['Good / Regular Usage', summaryCounts['Good / Regular Usage']], ['Intermittent Usage', summaryCounts['Intermittent Usage']], ['Sum Total', dataWithOverall.users.length]].forEach(vals => { const r = worksheet.addRow(vals); r.eachCell(c => { c.style = styles.summaryCell }) });
 
       worksheet.addRow([]);
       const behaviorRow = worksheet.addRow(['Overall Organisation Usage Behaviour', organizationBehavior]);
@@ -645,4 +916,5 @@ ruchita.modi@jsalaw.com</textarea>
     });
   </script>
 </body>
+
 </html>
